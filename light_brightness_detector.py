@@ -59,12 +59,16 @@ class light_detection_analysis(object):
     def light_source_detection(img):
     
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+
         # Fill any small holes
         closing = cv2.morphologyEx(fgmask, cv2.MORPH_CLOSE, kernel)
+
         # Remove noise
         opening = cv2.morphologyEx(closing, cv2.MORPH_OPEN, kernel)
+
         # Dilate to merge adjacent blobs
         dilation = cv2.dilate(opening, kernel, iterations = 2)
+
         # threshold (remove grey shadows)
         dilation[dilation < 240] = 0
         #=========================== contours ======================
@@ -79,6 +83,7 @@ class light_detection_analysis(object):
                 continue
             # centroid
             c_centroid = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
+
             # area
             c_area = M['m00']
             # perimeter
