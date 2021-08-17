@@ -14,6 +14,9 @@ class light_detection_analysis(object):
 
         # Count from the standard
         self.count = 0
+        
+        self.image_looping()
+
 
 
     def save_image(img, file_name, image_to_save):
@@ -30,7 +33,7 @@ class light_detection_analysis(object):
     
     def image_looping(self):
         
-        for image in images:
+        for image in self.images:
             self.count +=1
             print(self.count)
             img = cv2.imread(image, -1)
