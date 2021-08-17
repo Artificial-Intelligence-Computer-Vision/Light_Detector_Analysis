@@ -40,11 +40,14 @@ class light_detection_analysis(object):
             file_name = basename(image)
     
             gray_scale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            ret, mask = cv2.threshold(gray_scale, 0, 255,cv2.THRESH_BINARY_INV |cv2.THRESH_OTSU)
+            ret, mask = cv2.threshold(gray_scale, 0, 255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
 
-            brightness_detector = highlights_brightness(img)
+            brightness_detector = self.highlights_brightness(img)
+            light_source_detector = self.light_source_detection(img)
             brightness_detector[mask == 0] = [255, 0, 0]
-            save_image(brightness_detector, file_name, image_to_save = "brightness_detector")
+
+            self.save_image(brightness_detector, file_name, image_to_save = "brightness_detector")
+            self.save_image(light_source_detection, file_name, image_to_save = "light_detection")
 
 
 
@@ -89,21 +92,29 @@ class light_detection_analysis(object):
 
             # area
             c_area = M['m00']
+
+
             # perimeter
             try:
                 c_perimeter = cv2.arcLength(contour, True)
             except:
                 c_perimeter = cv2.arcLength(contour, False)
+
             # convexity
             c_convexity = cv2.isContourConvex(contour)
+
             # boundingRect
             (x, y, w, h) = cv2.boundingRect(contour)
+
             # br centroid
-            br_centroid = (x + int(w/2), y + int(h/2)) 
+            br_centroid = (x + int(w/2), y + int(h/2))
+
             # draw rect for each contour: 
             cv2.rectangle(original_frame,(x,y),(x+w,y+h),(0,255,0),2)
+
             # draw id:
             cv2.putText(original_frame, str(cID), (x+w,y+h), cv2.FONT_HERSHEY_PLAIN, 3, (127, 255, 255), 1)
+
             # save contour info
             contours_info.append([cID,frameID,c_centroid,br_centroid,c_area,c_perimeter,c_convexity,w,h])
 
