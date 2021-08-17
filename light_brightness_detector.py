@@ -1,3 +1,5 @@
+CopyRight Ronaldson Bellande
+
 import cv2
 import numpy as np
 from glob import glob
@@ -25,6 +27,8 @@ class light_detection_analysis(object):
         
         if image_to_save == 'brightness_detector':
             image_output = "brightness_detector/"
+        elif image_to_save == 'light_detection':
+            image_output = "light_detection"
         
         for i in range(len(image_number)):
             cv2.imwrite(os.path.join(image_output, str(file_name)), img)
@@ -36,6 +40,7 @@ class light_detection_analysis(object):
         for image in self.images:
             self.count +=1
             print(self.count)
+
             img = cv2.imread(image, -1)
             file_name = basename(image)
     
@@ -75,18 +80,22 @@ class light_detection_analysis(object):
         # Dilate to merge adjacent blobs
         dilation = cv2.dilate(opening, kernel, iterations = 2)
 
-        # threshold (remove grey shadows)
+        # Threshold (remove grey shadows)
         dilation[dilation < 240] = 0
-        #=========================== contours ======================
+
+        # Contours
         im, contours, hierarchy = cv2.findContours(dilation, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
 
-        # extract every contour and its information:
+        # Extract every contour and the information:
         for cID, contour in enumerate(contours):
+
             M = cv2.moments(contour)
+
             # neglect small contours:
             if M['m00'] < 400:
                 continue
+
             # centroid
             c_centroid = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
 
@@ -100,38 +109,36 @@ class light_detection_analysis(object):
             except:
                 c_perimeter = cv2.arcLength(contour, False)
 
-            # convexity
+            # Convexity
             c_convexity = cv2.isContourConvex(contour)
 
-            # boundingRect
+            # BoundingRect
             (x, y, w, h) = cv2.boundingRect(contour)
 
-            # br centroid
+            # Br centroid
             br_centroid = (x + int(w/2), y + int(h/2))
 
-            # draw rect for each contour: 
+            # Draw rect for each contour: 
             cv2.rectangle(original_frame,(x,y),(x+w,y+h),(0,255,0),2)
 
-            # draw id:
+            # Draw id:
             cv2.putText(original_frame, str(cID), (x+w,y+h), cv2.FONT_HERSHEY_PLAIN, 3, (127, 255, 255), 1)
 
-            # save contour info
+            # Save contour info
             contours_info.append([cID,frameID,c_centroid,br_centroid,c_area,c_perimeter,c_convexity,w,h])
 
 
-        #======================= show processed frame img ============================
-        cv2.imshow('fg',dilation)
-        cv2.imshow('origin',original_frame)
-        # save frame image:
+        # Show processed frame img
         cv2.imwrite('pics/{}.png'.format(str(frameID)), original_frame)
         cv2.imwrite('pics/fb-{}.png'.format(str(frameID)), dilation)
+
         frameID += 1
         k = cv2.waitKey(30) & 0xff
+
+
         if k == 27:
             cap.release()
             cv2.destroyAllWindows()
-            break
-        else:
-            break
+            # break
     
     
