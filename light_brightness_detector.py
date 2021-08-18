@@ -6,6 +6,9 @@ class light_detection_analysis(object):
         self.image_path = "images_data/"
         self.images = [count for count in glob(image_path +'*') if 'jpg' in count]
 
+        # Kernel Creation 
+        self.kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+
         # Count from the standard
         self.count = 0
         
@@ -49,7 +52,7 @@ class light_detection_analysis(object):
 
 
     
-    def highlights_brightness(img):
+    def highlights_brightness(self, img):
 
         img = cv2.cvtColor(img,cv2.COLOR_RGB2HSV)
         img[:,:,1] = img[:,:,1] + (0.01 + np.random.normal())
@@ -59,15 +62,13 @@ class light_detection_analysis(object):
 
     
 
-    def light_source_detection(img):
+    def light_source_detection(self, img):
     
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
-
         # Fill any small holes
-        closing = cv2.morphologyEx(fgmask, cv2.MORPH_CLOSE, kernel)
+        closing = cv2.morphologyEx(fgmask, cv2.MORPH_CLOSE, self.kernel)
 
         # Remove noise
-        opening = cv2.morphologyEx(closing, cv2.MORPH_OPEN, kernel)
+        opening = cv2.morphologyEx(closing, cv2.MORPH_OPEN, self.kernel)
 
         # Dilate to merge adjacent blobs
         dilation = cv2.dilate(opening, kernel, iterations = 2)
@@ -125,12 +126,6 @@ class light_detection_analysis(object):
         cv2.imwrite('pics/fb-{}.png'.format(str(frameID)), dilation)
 
         frameID += 1
-        k = cv2.waitKey(30) & 0xff
 
-
-        if k == 27:
-            cap.release()
-            cv2.destroyAllWindows()
-            # break
     
     
