@@ -4,7 +4,7 @@ from header_imports import *
 class light_detection_analysis(object):
     def __init__(self):
         self.image_path = "images_data/"
-        self.images = [count for count in glob(image_path +'*') if 'jpg' in count]
+        self.images = [count for count in glob(self.image_path +'*') if 'jpg' in count]
 
         # Kernel Creation 
         self.kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
@@ -15,17 +15,24 @@ class light_detection_analysis(object):
         # Start analysing
         self.image_looping()
 
+        # Image
+        self.contours_info = []
 
 
 
-    def save_image(img, file_name, image_to_save):
+
+    def save_image(self, img, file_name, image_to_save):
         image_path = "images_data/"
-        image_number = [count for count in glob(image_path+'*') if 'jpg' in count]
+        image_number = [count for count in glob(self.image_path + '*') if 'jpg' in count]
         
         if image_to_save == 'brightness_detector':
             image_output = "brightness_detector/"
         elif image_to_save == 'light_detection':
             image_output = "light_detection"
+        elif image_to_save == "original":
+            image_output = "modified_image"
+
+
         
         for i in range(len(image_number)):
             cv2.imwrite(os.path.join(image_output, str(file_name)), img)
@@ -50,7 +57,8 @@ class light_detection_analysis(object):
             brightness_detector[mask == 0] = [255, 0, 0]
 
             self.save_image(brightness_detector, file_name, image_to_save = "brightness_detector")
-            self.save_image(light_source_detection, file_name, image_to_save = "light_detection")
+            self.save_image(light_source_detector, file_name, image_to_save = "light_detection")
+            # self.save_image(original, file_name, image_to_save = "light_detection")
 
 
 
@@ -66,21 +74,25 @@ class light_detection_analysis(object):
     
 
     def light_source_detection(self, img):
+
+        original_frame = img.copy()
+        shadow = cv2.createBackgroundSubtractorMOG2(history=500, detectShadows=True)
+        mask = shadow.apply(img)
     
         # Fill any small holes
-        closing = cv2.morphologyEx(fgmask, cv2.MORPH_CLOSE, self.kernel)
+        closing = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, self.kernel)
 
         # Remove noise
         opening = cv2.morphologyEx(closing, cv2.MORPH_OPEN, self.kernel)
 
         # Dilate to merge adjacent blobs
-        dilation = cv2.dilate(opening, kernel, iterations = 2)
+        dilation = cv2.dilate(opening, self.kernel, iterations = 2)
 
         # Threshold (remove grey shadows)
         dilation[dilation < 240] = 0
 
         # Contours
-        im, contours, hierarchy = cv2.findContours(dilation, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(dilation, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
 
         # Extract every contour and the information:
@@ -121,9 +133,7 @@ class light_detection_analysis(object):
             cv2.putText(original_frame, str(cID), (x+w,y+h), cv2.FONT_HERSHEY_PLAIN, 3, (127, 255, 255), 1)
 
             # Save contour info
-            contours_info.append([cID,frameID,c_centroid,br_centroid,c_area,c_perimeter,c_convexity,w,h])
+            self.contours_info.append([cID,frameID,c_centroid,br_centroid,c_area,c_perimeter,c_convexity,w,h])
 
 
-        # Show processed frame img
-        cv2.imwrite('pics/{}.png'.format(str(frameID)), original_frame)
-        cv2.imwrite('pics/fb-{}.png'.format(str(frameID)), dilation)
+        return original_frame
