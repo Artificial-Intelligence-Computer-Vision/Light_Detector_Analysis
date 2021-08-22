@@ -75,6 +75,7 @@ class light_detection_analysis(object):
 
     def light_source_detection(self, img):
 
+
         original_frame = img.copy()
         shadow = cv2.createBackgroundSubtractorMOG2(history=500, detectShadows=True)
         mask = shadow.apply(img)
@@ -93,6 +94,7 @@ class light_detection_analysis(object):
 
         # Contours
         contours, _ = cv2.findContours(dilation, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
 
 
         # Extract every contour and the information:
@@ -133,7 +135,7 @@ class light_detection_analysis(object):
             cv2.putText(original_frame, str(cID), (x+w,y+h), cv2.FONT_HERSHEY_PLAIN, 3, (127, 255, 255), 1)
 
             # Save contour info
-            self.contours_info.append([cID,frameID,c_centroid,br_centroid,c_area,c_perimeter,c_convexity,w,h])
+            # self.contours_info.append([cID,frameID,c_centroid,br_centroid,c_area,c_perimeter,c_convexity,w,h])
 
 
         return original_frame
