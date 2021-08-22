@@ -12,7 +12,9 @@ class light_detection_analysis(object):
         # Count from the standard
         self.count = 0
         
+        # Start analysing
         self.image_looping()
+
 
 
 
@@ -29,6 +31,7 @@ class light_detection_analysis(object):
             cv2.imwrite(os.path.join(image_output, str(file_name)), img)
             cv2.waitKey(0)
         
+
     
     def image_looping(self):
         
@@ -124,8 +127,3 @@ class light_detection_analysis(object):
         # Show processed frame img
         cv2.imwrite('pics/{}.png'.format(str(frameID)), original_frame)
         cv2.imwrite('pics/fb-{}.png'.format(str(frameID)), dilation)
-
-        frameID += 1
-
-    
-    

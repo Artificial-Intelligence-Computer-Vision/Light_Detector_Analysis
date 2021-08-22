@@ -1,5 +1,4 @@
-CopyRight Ronaldson Bellande
-
+import pdb 
 import cv2
 import numpy as np
 from glob import glob
