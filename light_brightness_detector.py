@@ -14,10 +14,12 @@ class light_detection_analysis(object):
         
         # Start analysing
         self.image_looping()
-
+        
+        # Mask
+        self.mask = None
+        
         # Image
-        self.contours_info = []
-
+        self.contours_info = [];
 
 
 
@@ -27,10 +29,10 @@ class light_detection_analysis(object):
         
         if image_to_save == 'brightness_detector':
             image_output = "brightness_detector/"
-        elif image_to_save == 'light_detection':
+        elif image_to_save == 'light_detection_source':
+            image_output = "light_detection_source"
+        elif image_to_save == "light_detection":
             image_output = "light_detection"
-        elif image_to_save == "original":
-            image_output = "modified_image"
 
 
         
@@ -52,13 +54,15 @@ class light_detection_analysis(object):
             gray_scale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             ret, mask = cv2.threshold(gray_scale, 0, 255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
 
+            self.mask = mask
+
             brightness_detector = self.highlights_brightness(img)
             light_source_detector = self.light_source_detection(img)
-            brightness_detector[mask == 0] = [255, 0, 0]
+            light_detection = self.light_detection(brightness_detector)
 
             self.save_image(brightness_detector, file_name, image_to_save = "brightness_detector")
-            self.save_image(light_source_detector, file_name, image_to_save = "light_detection")
-            # self.save_image(original, file_name, image_to_save = "light_detection")
+            self.save_image(light_source_detector, file_name, image_to_save = "light_detection_source")
+            self.save_image(light_detection, file_name, image_to_save = "light_detection")
 
 
 
@@ -68,13 +72,15 @@ class light_detection_analysis(object):
         img = cv2.cvtColor(img,cv2.COLOR_RGB2HSV)
         img[:,:,1] = img[:,:,1] + (0.01 + np.random.normal())
         img_modify = cv2.cvtColor(img,cv2.COLOR_HSV2RGB)
-    
+
+        # Change the color wanted to display
+        img_modify[self.mask == 0] = [255, 0, 0]
+
         return img_modify
 
     
 
     def light_source_detection(self, img):
-
 
         original_frame = img.copy()
         shadow = cv2.createBackgroundSubtractorMOG2(history=500, detectShadows=True)
@@ -90,12 +96,10 @@ class light_detection_analysis(object):
         dilation = cv2.dilate(opening, self.kernel, iterations = 2)
 
         # Threshold (remove grey shadows)
-        dilation[dilation < 240] = 0
+        dilation[dilation < 150] = 0
 
         # Contours
         contours, _ = cv2.findContours(dilation, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-
 
         # Extract every contour and the information:
         for cID, contour in enumerate(contours):
@@ -137,5 +141,29 @@ class light_detection_analysis(object):
             # Save contour info
             # self.contours_info.append([cID,frameID,c_centroid,br_centroid,c_area,c_perimeter,c_convexity,w,h])
 
-
         return original_frame
+
+
+
+
+    def light_detection(self, img):
+
+        col_switch = cv2.cvtColor(img, 70)
+        
+        # Upperbound and lower bounds
+        lower = np.array([0,0,0])
+        upper = np.array([40,10,255]) 
+
+        shadow = cv2.createBackgroundSubtractorMOG2(history=500, detectShadows=True)
+        mask = cv2.inRange(col_switch, lower, upper)
+        res = cv2.bitwise_and(col_switch,col_switch, mask= mask)
+
+        fgmask = shadow.apply(res)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+
+        # Dilate to merge adjacent blobs
+        d_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        dilation = cv2.dilate(fgmask, d_kernel, iterations = 2)
+        dilation[dilation < 255] = 0
+
+        return dilation
